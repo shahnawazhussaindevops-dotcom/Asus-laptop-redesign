@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --color-background: hsl(0 0% 4%);
+  --color-foreground: hsl(0 0% 96%);
+  --color-muted: hsl(0 0% 10%);
+  --color-muted-foreground: hsl(0 0% 50%);
+  --color-primary: hsl(217 91% 60%);
+  --color-primary-foreground: hsl(0 0% 100%);
+  --color-accent: hsl(43 96% 56%);
+  --color-accent-foreground: hsl(0 0% 4%);
+  --color-border: hsl(0 0% 14%);
+  --color-card: hsl(0 0% 6%);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(0 0% 20%) transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: hsl(217 91% 60% / 0.3);
+  color: hsl(0 0% 100%);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px hsl(217 91% 60% / 0.15); }
+  50% { box-shadow: 0 0 40px hsl(217 91% 60% / 0.3); }
+}
+
+@keyframes text-reveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
