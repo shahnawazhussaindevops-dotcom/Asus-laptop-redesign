@@ -1,8 +1,10 @@
 import Navbar from "@/components/Navbar";
 import ScrollCanvas from "@/components/ScrollCanvas";
-import InfoStrip from "@/components/InfoStrip";
-import StorySection from "@/components/StorySection";
+import SocialProof from "@/components/SocialProof";
+import SpecsSection from "@/components/SpecsSection";
 import GallerySection from "@/components/GallerySection";
+import Testimonials from "@/components/Testimonials";
+import FAQ from "@/components/FAQ";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 
@@ -11,9 +13,11 @@ export default function Home() {
     <main>
       <Navbar />
       <ScrollCanvas />
-      <InfoStrip />
-      <StorySection />
+      <SocialProof />
+      <SpecsSection />
       <GallerySection />
+      <Testimonials />
+      <FAQ />
       <CTASection />
       <Footer />
     </main>
