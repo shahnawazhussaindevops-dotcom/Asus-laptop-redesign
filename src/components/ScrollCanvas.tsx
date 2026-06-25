@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback } from "react";
 
-const TOTAL_FRAMES = 240;
+const DURATION = 10;
 
 const heroTexts = [
   { id: 0, range: [0, 0.08], line1: "Transcend", line2: "Boundaries", tag: "Discover the new" },
@@ -13,21 +13,13 @@ const heroTexts = [
   { id: 5, range: [0.85, 1], line1: "Yours", line2: "Now", tag: "The future awaits" },
 ];
 
-function frameUrl(index: number): string {
-  const padded = String(index).padStart(3, "0");
-  return `/sequence/frame_${padded}_delay-0.041s.png`;
-}
-
 export default function ScrollCanvas() {
   const sectionRef = useRef<HTMLElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imagesRef = useRef<HTMLImageElement[]>([]);
-  const frameRef = useRef(0);
-  const [loaded, setLoaded] = useState(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const rafRef = useRef<number>(0);
   const [ready, setReady] = useState(false);
   const [progress, setProgress] = useState(0);
   const [activeTextId, setActiveTextId] = useState(0);
-  const [prevTextId, setPrevTextId] = useState(0);
 
   const getActiveText = useCallback((p: number) => {
     for (const t of heroTexts) {
@@ -37,101 +29,55 @@ export default function ScrollCanvas() {
   }, []);
 
   useEffect(() => {
-    const imgs: HTMLImageElement[] = [];
-    let count = 0;
+    const video = videoRef.current;
+    if (!video) return;
 
-    for (let i = 0; i < TOTAL_FRAMES; i++) {
-      const img = new Image();
-      img.onload = () => {
-        count++;
-        setLoaded(count);
-        if (i === 0) {
-          imagesRef.current = imgs;
-          setReady(true);
-        }
-      };
-      img.onerror = () => {
-        if (i === 0) {
-          imagesRef.current = imgs;
-          setReady(true);
-        }
-      };
-      img.src = frameUrl(i);
-      imgs[i] = img;
+    function onLoaded() {
+      setReady(true);
     }
+
+    video.addEventListener("loadeddata", onLoaded);
+    if (video.readyState >= 2) {
+      setReady(true);
+    }
+
+    return () => {
+      video.removeEventListener("loadeddata", onLoaded);
+    };
   }, []);
 
   useEffect(() => {
     if (!ready) return;
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const section = sectionRef.current;
+    const video = videoRef.current;
+    if (!section || !video) return;
 
-    const ctx = canvas.getContext("2d", { alpha: false });
-    if (!ctx) return;
-
-    const images = imagesRef.current;
-
-    function resize() {
-      if (!canvas) return;
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-
-    resize();
-    window.addEventListener("resize", resize);
-
-    function drawFrame(index: number) {
-      if (!canvas || !ctx) return;
-      const img = images[index];
-      if (!img) return;
-
-      const cw = canvas.width;
-      const ch = canvas.height;
-      const iw = img.naturalWidth;
-      const ih = img.naturalHeight;
-
-      const scale = Math.max(cw / iw, ch / ih);
-      const sw = iw * scale;
-      const sh = ih * scale;
-      const sx = (cw - sw) / 2;
-      const sy = (ch - sh) / 2;
-
-      ctx.clearRect(0, 0, cw, ch);
-      ctx.drawImage(img, sx, sy, sw, sh);
-    }
-
-    function updateFrame() {
-      if (!canvas) return;
+    function update() {
       const scrollTop = window.scrollY;
-      const section = sectionRef.current;
-      if (!section) return;
+      if (!section || !video) return;
       const heroHeight = section.offsetHeight;
       const scrollable = heroHeight - window.innerHeight;
       if (scrollable <= 0) return;
       const p = Math.min(scrollTop / scrollable, 1);
-      const index = Math.min(Math.floor(p * (TOTAL_FRAMES - 1)), TOTAL_FRAMES - 1);
 
       setProgress(p);
-      setPrevTextId(activeTextId);
       setActiveTextId(getActiveText(p).id);
 
-      if (index !== frameRef.current) {
-        frameRef.current = index;
-        drawFrame(index);
+      const time = p * DURATION;
+      if (Math.abs(video.currentTime - time) > 0.01) {
+        video.currentTime = time;
       }
+
+      rafRef.current = requestAnimationFrame(update);
     }
 
-    drawFrame(0);
-    frameRef.current = 0;
-    updateFrame();
-    window.addEventListener("scroll", updateFrame, { passive: true });
+    rafRef.current = requestAnimationFrame(update);
 
     return () => {
-      window.removeEventListener("resize", resize);
-      window.removeEventListener("scroll", updateFrame);
+      cancelAnimationFrame(rafRef.current);
     };
-  }, [ready, getActiveText, activeTextId]);
+  }, [ready, getActiveText]);
 
   const current = heroTexts[activeTextId];
 
@@ -148,9 +94,14 @@ export default function ScrollCanvas() {
           <div className="h-full w-full" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E\")" }} />
         </div>
 
-        <canvas
-          ref={canvasRef}
-          className="h-full w-full"
+        <video
+          ref={videoRef}
+          className="absolute inset-0 h-full w-full object-cover"
+          src="/sequence.mp4"
+          preload="auto"
+          muted
+          playsInline
+          loop={false}
           aria-label="ASUS laptop animation sequence"
         />
 
@@ -232,15 +183,6 @@ export default function ScrollCanvas() {
               <div className="text-xs font-medium tracking-[0.25em] text-muted-foreground uppercase">
                 Loading Experience
               </div>
-            </div>
-            <div className="h-1 w-48 overflow-hidden rounded-full bg-white/[0.04]">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all duration-300 ease-out"
-                style={{ width: `${(loaded / TOTAL_FRAMES) * 100}%` }}
-              />
-            </div>
-            <div className="text-[11px] font-medium text-muted-foreground tabular-nums">
-              {Math.round((loaded / TOTAL_FRAMES) * 100)}%
             </div>
           </div>
         )}

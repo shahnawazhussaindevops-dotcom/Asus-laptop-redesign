@@ -5,3 +5,4 @@ dev-server.log
 dev_output.txt
 dev_error.txt
 dev-server.log.err
+public/sequence/
