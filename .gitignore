@@ -2,6 +2,6 @@ node_modules/
 .next/
 *.log
 dev-server.log
-public/sequence/
 dev_output.txt
 dev_error.txt
+dev-server.log.err
